@@ -1,0 +1,21 @@
+# Build output
+target/
+*.exe
+*.pdb
+*.dll
+
+# Config with private Client ID
+config.json
+
+# Logs / temp
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
