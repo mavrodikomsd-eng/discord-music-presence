@@ -3,6 +3,10 @@
 //!
 //! Source of truth: Windows SMTC. Output: Discord IPC.
 
+// В релизе — GUI-приложение без консольного окна; в отладке консоль
+// остаётся, чтобы видеть логи и паники.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod app;
 mod app_state;
 mod artwork;
