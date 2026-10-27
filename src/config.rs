@@ -17,9 +17,16 @@ pub struct Config {
     /// GUI theme: true = dark, false = light.
     #[serde(default = "default_dark")]
     pub dark_mode: bool,
+    /// Closing the window hides it to the tray instead of exiting.
+    #[serde(default = "default_true")]
+    pub tray_minimize: bool,
 }
 
 fn default_dark() -> bool {
+    true
+}
+
+fn default_true() -> bool {
     true
 }
 
@@ -57,6 +64,7 @@ mod tests {
             client_id: "1234567890".into(),
             autostart: false,
             dark_mode: true,
+            tray_minimize: true,
         })
         .unwrap();
         let parsed: Config = serde_json::from_str(&json).unwrap();

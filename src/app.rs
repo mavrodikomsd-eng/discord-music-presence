@@ -19,6 +19,9 @@ pub struct PresenceApp {
     enabled: bool,
     autostart: bool,
     dark_mode: bool,
+    tray_minimize: bool,
+    quit_requested: bool,
+    tray: crate::tray::Tray,
     track: Option<TrackSnapshot>,
     history: Vec<TrackSnapshot>,
     cover: Option<TextureHandle>,
@@ -26,6 +29,7 @@ pub struct PresenceApp {
     status: String,
     status_ok: Option<bool>,
     discord_connected: bool,
+    ctx: egui::Context,
 }
 
 impl PresenceApp {
@@ -38,6 +42,8 @@ impl PresenceApp {
         enabled: bool,
         autostart: bool,
         dark_mode: bool,
+        tray_minimize: bool,
+        tray: crate::tray::Tray,
     ) -> Self {
         let (track, cover_version, cover_image, history) = with_state(&state, |s| {
             (
@@ -60,6 +66,9 @@ impl PresenceApp {
             enabled,
             autostart,
             dark_mode,
+            tray_minimize,
+            quit_requested: false,
+            tray,
             track,
             history,
             cover,
@@ -67,7 +76,13 @@ impl PresenceApp {
             status: String::new(),
             status_ok: None,
             discord_connected: false,
+            ctx: ctx.clone(),
         }
+    }
+
+    fn hide_to_tray(&self) {
+        self.ctx
+            .send_viewport_cmd(egui::ViewportCommand::Visible(false));
     }
 
     fn save_config(&mut self) {
@@ -75,6 +90,7 @@ impl PresenceApp {
             client_id: self.client_id.trim().to_string(),
             autostart: self.autostart,
             dark_mode: self.dark_mode,
+            tray_minimize: self.tray_minimize,
         };
         if let Err(err) = config::save(&cfg) {
             self.status = err;
@@ -114,6 +130,26 @@ impl PresenceApp {
 impl eframe::App for PresenceApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
+
+        match self.tray.poll_action() {
+            Some(crate::tray::TrayAction::Show) => {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+                ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+            }
+            Some(crate::tray::TrayAction::Quit) => {
+                self.quit_requested = true;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+            None => {}
+        }
+
+        // Hide to tray instead of exiting when the window [X] is pressed.
+        let close_requested = ctx.input(|i| i.viewport().close_requested());
+        if close_requested && self.tray_minimize && !self.quit_requested {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.hide_to_tray();
+        }
+
         let (cover_version, cover_image, status, connected, history) =
             with_state(&self.state, |s| {
                 (
@@ -152,7 +188,8 @@ impl eframe::App for PresenceApp {
                     (egui::Color32::from_rgb(230, 160, 60), "Discord: ожидание")
                 };
                 self.status_ok = Some(self.enabled && self.discord_connected);
-                let (rect, _) = ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
+                let (rect, _) =
+                    ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
                 ui.painter().circle_filled(rect.center(), 5.0, dot);
                 ui.label(RichText::new(text).weak());
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -239,6 +276,12 @@ impl eframe::App for PresenceApp {
                 let enable = self.autostart;
                 self.toggle_autostart(enable);
             }
+            if ui
+                .checkbox(&mut self.tray_minimize, "Сворачивать в трей вместо выхода")
+                .changed()
+            {
+                self.save_config();
+            }
 
             ui.add_space(6.0);
 
@@ -284,19 +327,19 @@ impl eframe::App for PresenceApp {
                 .id_salt("history_section")
                 .default_open(false)
                 .show(ui, |ui| {
-                    egui::ScrollArea::vertical().max_height(96.0).show(ui, |ui| {
-                        for t in self.history.iter().rev() {
-                            ui.horizontal(|ui| {
-                                ui.label(RichText::new("♪").weak());
-                                ui.label(RichText::new(&t.title).size(12.0));
-                                ui.label(
-                                    RichText::new(format!("— {}", t.artist))
-                                        .weak()
-                                        .size(12.0),
-                                );
-                            });
-                        }
-                    });
+                    egui::ScrollArea::vertical()
+                        .max_height(96.0)
+                        .show(ui, |ui| {
+                            for t in self.history.iter().rev() {
+                                ui.horizontal(|ui| {
+                                    ui.label(RichText::new("♪").weak());
+                                    ui.label(RichText::new(&t.title).size(12.0));
+                                    ui.label(
+                                        RichText::new(format!("— {}", t.artist)).weak().size(12.0),
+                                    );
+                                });
+                            }
+                        });
                 });
                 ui.add_space(6.0);
             }

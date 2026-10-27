@@ -9,14 +9,15 @@
 
 mod app;
 mod app_state;
-mod autostart;
 mod artwork;
+mod autostart;
 mod config;
 mod discord_presence;
 mod poller;
 mod smtc_source;
 mod timeline;
 mod track;
+mod tray;
 
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
@@ -47,6 +48,14 @@ fn run_gui() -> Result<(), String> {
     let poller_handle = poller::spawn(state.clone(), commands_rx);
     let ui_commands_tx = commands_tx.clone();
 
+    let tray = match tray::Tray::new() {
+        Ok(t) => t,
+        Err(err) => {
+            eprintln!("Трей недоступен: {err}");
+            return Err(err);
+        }
+    };
+
     let options = app::window_options();
     let run_result = eframe::run_native(
         "MusicPresence",
@@ -60,6 +69,8 @@ fn run_gui() -> Result<(), String> {
                 true,
                 cfg.autostart,
                 cfg.dark_mode,
+                cfg.tray_minimize,
+                tray,
             )))
         }),
     );
