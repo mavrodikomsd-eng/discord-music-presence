@@ -7,6 +7,7 @@ license = "MIT"
 
 [dependencies]
 discord-rich-presence = "1.1"
+winreg = "0.55"
 eframe = "0.37"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
 pollster = "1"

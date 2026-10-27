@@ -9,6 +9,7 @@
 
 mod app;
 mod app_state;
+mod autostart;
 mod artwork;
 mod config;
 mod discord_presence;
@@ -57,6 +58,8 @@ fn run_gui() -> Result<(), String> {
                 ui_commands_tx.clone(),
                 client_id.clone(),
                 true,
+                cfg.autostart,
+                cfg.dark_mode,
             )))
         }),
     );

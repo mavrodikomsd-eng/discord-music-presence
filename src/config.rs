@@ -11,6 +11,16 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     #[serde(default)]
     pub client_id: String,
+    /// Launch MusicPresence automatically on Windows login (HKCU Run key).
+    #[serde(default)]
+    pub autostart: bool,
+    /// GUI theme: true = dark, false = light.
+    #[serde(default = "default_dark")]
+    pub dark_mode: bool,
+}
+
+fn default_dark() -> bool {
+    true
 }
 
 pub fn config_path() -> PathBuf {
@@ -45,6 +55,8 @@ mod tests {
     fn config_roundtrip() {
         let json = serde_json::to_string(&Config {
             client_id: "1234567890".into(),
+            autostart: false,
+            dark_mode: true,
         })
         .unwrap();
         let parsed: Config = serde_json::from_str(&json).unwrap();

@@ -18,6 +18,8 @@ pub struct CoverImage {
 #[derive(Default)]
 pub struct UiState {
     pub track: Option<TrackSnapshot>,
+    /// Last distinct tracks of this session, newest last (UI shows a few).
+    pub history: Vec<TrackSnapshot>,
     pub cover: Option<CoverImage>,
     /// Bumps whenever `cover` changes so the UI re-uploads the texture.
     pub cover_version: u64,

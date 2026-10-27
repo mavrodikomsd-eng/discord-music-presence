@@ -147,7 +147,21 @@ impl Poller {
     }
 
     fn publish_track(&mut self, snapshot: Option<TrackSnapshot>) {
-        with_state(&self.state, |s| s.track = snapshot.clone());
+        with_state(&self.state, |s| {
+            if let Some(new) = &snapshot {
+                let is_new = match s.track.as_ref() {
+                    Some(previous) => !previous.same_track(new),
+                    None => true,
+                };
+                if is_new && s.history.last().map(|h| !h.same_track(new)).unwrap_or(true) {
+                    s.history.push(new.clone());
+                    if s.history.len() > 5 {
+                        s.history.remove(0);
+                    }
+                }
+            }
+            s.track = snapshot.clone();
+        });
     }
 
     fn refresh_cover_if_track_changed(&mut self) {

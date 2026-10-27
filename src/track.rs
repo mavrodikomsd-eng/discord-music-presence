@@ -34,6 +34,22 @@ pub struct TrackSnapshot {
 }
 
 impl TrackSnapshot {
+    /// Live playback cursor for UI display: (position_secs, duration_secs).
+    /// Projects the position forward while Playing and clamps to the duration.
+    /// Returns `None` when the source reports no usable timeline.
+    pub fn live_timeline(&self, now_unix: u64) -> Option<(f64, f64)> {
+        let duration = self.duration?.as_secs_f64();
+        if duration <= 0.0 {
+            return None;
+        }
+        let mut position = self.position?.as_secs_f64();
+        if self.status == PlaybackStatus::Playing {
+            let elapsed = now_unix.saturating_sub(self.position_updated_unix) as f64;
+            position += elapsed;
+        }
+        Some((position.min(duration), duration))
+    }
+
     /// Two snapshots describe the same track when title/artist/album match
     /// (case-insensitive) and at least the title is present.
     pub fn same_track(&self, other: &TrackSnapshot) -> bool {
@@ -109,5 +125,46 @@ mod tests {
     #[test]
     fn truncate_noop_for_short() {
         assert_eq!(truncate_chars("abc", 10), "abc");
+    }
+
+    #[test]
+    fn live_timeline_projects_while_playing() {
+        let mut t = snap("Track", "Artist", None);
+        t.status = PlaybackStatus::Playing;
+        t.position = Some(Duration::from_secs(60));
+        t.duration = Some(Duration::from_secs(180));
+        t.position_updated_unix = 1000;
+        let (pos, dur) = t.live_timeline(1010).unwrap();
+        assert!((pos - 70.0).abs() < 0.001, "pos = {pos}");
+        assert!((dur - 180.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn live_timeline_frozen_when_paused() {
+        let mut t = snap("Track", "Artist", None);
+        t.status = PlaybackStatus::Paused;
+        t.position = Some(Duration::from_secs(60));
+        t.duration = Some(Duration::from_secs(180));
+        t.position_updated_unix = 1000;
+        let (pos, _) = t.live_timeline(1050).unwrap();
+        assert!((pos - 60.0).abs() < 0.001, "pos = {pos}");
+    }
+
+    #[test]
+    fn live_timeline_clamps_to_duration() {
+        let mut t = snap("Track", "Artist", None);
+        t.status = PlaybackStatus::Playing;
+        t.position = Some(Duration::from_secs(170));
+        t.duration = Some(Duration::from_secs(180));
+        t.position_updated_unix = 1000;
+        let (pos, dur) = t.live_timeline(1300).unwrap();
+        assert!((pos - 180.0).abs() < 0.001, "pos = {pos}");
+        assert!((dur - 180.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn live_timeline_none_without_timeline() {
+        let t = snap("Track", "Artist", None);
+        assert!(t.live_timeline(1000).is_none());
     }
 }
