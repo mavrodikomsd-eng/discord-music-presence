@@ -30,6 +30,7 @@ MusicPresence reads what your system is playing (via **Windows SMTC**) and shows
 - ⏱️ Live progress bar with timecodes (both in Discord and in the app window)
 - ⏸️ Pause handling, clean status on stop/exit
 - 🖼️ Big cover, dark/light theme, session history — in the app
+- 🫥 **Closes to tray** — the status keeps running when the window is hidden
 - 🚀 **Autostart with Windows** — one checkbox
 - 💾 Cover cache, so iTunes is not hammered on every track
 - 🔍 `--dump` diagnostic mode: see exactly what SMTC reports
@@ -84,6 +85,7 @@ MusicPresence читает то, что играет в системе (чере
 - ⏱️ Живой прогресс-бар с таймкодами (и в Discord, и в окне программы)
 - ⏸️ Корректная пауза, чистый статус при стопе и выходе
 - 🖼️ Крупная обложка, тёмная/светлая тема, история сессии
+- 🫥 **Сворачивается в трей** — статус продолжает жить, пока окно скрыто
 - 🚀 **Автозапуск вместе с Windows** — одна галочка
 - 💾 Кэш обложек — iTunes не дёргается на каждый трек
 - 🔍 Режим диагностики `--dump`
