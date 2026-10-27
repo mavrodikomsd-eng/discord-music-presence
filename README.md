@@ -1,24 +1,101 @@
+<div align="center">
+
 # 🎵 MusicPresence
 
-Показывает музыку, которую вы слушаете (в том числе **YouTube Music в браузере**), как Discord Rich Presence — с обложкой и бегущими таймкодами. GUI на egui, один `.exe`-файл.
+**Any Windows player → Discord Rich Presence. YouTube Music in a browser, Spotify, desktop players — everything the system can see.**
 
-> ✅ Статус: MVP готов, работает под Windows 10/11.
+Cover art, live timecodes, one `.exe`, zero bloat.
 
----
+[![Release](https://img.shields.io/github/v/release/mavrodikomsd-eng/discord-music-presence?label=release&color=green)](https://github.com/mavrodikomsd-eng/discord-music-presence/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/mavrodikomsd-eng/discord-music-presence/releases)
+[![Built with](https://img.shields.io/badge/built%20with-Rust%20%2B%20egui-orange)](https://github.com/mavrodikomsd-eng/discord-music-presence)
 
-## 🖼️ Скриншоты
+[English](#-english) · [Русский](#-русский)
 
-### 💻 GUI программы
+<img src="MusicInBrowserwithDiscord.png" width="600"/>
 
-![Окно MusicPresence](gui.png)
-
-### 💬 Статус в Discord
-
-![Rich Presence в Discord](MusicInBrowserwithDiscord.png)
+</div>
 
 ---
 
-## 🧩 Как это работает
+## 🇬🇧 English
+
+### What it does
+
+MusicPresence reads what your system is playing (via **Windows SMTC**) and shows it as your **Discord Rich Presence**: track title, artist, album, **live ticking timecodes** and **cover art** (fetched from iTunes Search). Works with YouTube Music in a browser, Spotify, desktop players — anything that publishes to SMTC.
+
+### ✨ Features
+
+- 🎧 Title, artist, album and cover art in your Discord status
+- ⏱️ Live progress bar with timecodes (both in Discord and in the app window)
+- ⏸️ Pause handling, clean status on stop/exit
+- 🖼️ Big cover, dark/light theme, session history — in the app
+- 🚀 **Autostart with Windows** — one checkbox
+- 💾 Cover cache, so iTunes is not hammered on every track
+- 🔍 `--dump` diagnostic mode: see exactly what SMTC reports
+- 🔒 Privacy: only reads what players publish to the system. No browser data, no tokens.
+
+### 🚀 Quick start (no build tools needed)
+
+1. **Download** `MusicPresence.exe` from [Releases](https://github.com/mavrodikomsd-eng/discord-music-presence/releases) and run it.
+2. Get your **Client ID**: [discord.com/developers/applications](https://discord.com/developers/applications) → *New Application* → copy the **Application ID** → paste it in the app → *Save*. One minute, no bot creation needed. (Why your own ID: the activity shows as *your* application — a shared ID looks like spam and risks a ban.)
+3. Play music. Your Discord status comes alive.
+
+<details>
+<summary><b>Build from source</b></summary>
+
+```powershell
+git clone https://github.com/mavrodikomsd-eng/discord-music-presence.git
+cd discord-music-presence
+cargo build --release
+target\release\musicpresence.exe
+```
+
+Requires Rust stable (Windows 10 1803+ for SMTC).
+
+</details>
+
+### ❓ FAQ
+
+<details>
+<summary>Cover art doesn't show up</summary>
+The cover comes from an iTunes Search lookup by title+artist. Rare/misspelled tracks may miss; the status then shows without a picture. Everything else keeps working.
+</details>
+<details>
+<summary>My player isn't detected</summary>
+The player must publish to Windows SMTC (most modern players and browsers do). Run <code>musicpresence.exe --dump</code> to see what the system reports.
+</details>
+<details>
+<summary>Is it safe?</summary>
+Yes — SMTC is the official Windows media API. MusicPresence only reads the metadata players publish themselves and talks to Discord via local IPC. No tokens, no browser history, no network calls except the iTunes cover lookup.
+</details>
+
+---
+
+## 🇷🇺 Русский
+
+### Что это
+
+MusicPresence читает то, что играет в системе (через **Windows SMTC**), и показывает это как **Discord Rich Presence**: название, исполнитель, альбом, **живые таймкоды** и **обложка** (ищется через iTunes Search). Работает с YouTube Music в браузере, Spotify, десктопными плеерами — со всем, что публикует SMTC.
+
+### ✨ Возможности
+
+- 🎧 Название, исполнитель, альбом и обложка в статусе Discord
+- ⏱️ Живой прогресс-бар с таймкодами (и в Discord, и в окне программы)
+- ⏸️ Корректная пауза, чистый статус при стопе и выходе
+- 🖼️ Крупная обложка, тёмная/светлая тема, история сессии
+- 🚀 **Автозапуск вместе с Windows** — одна галочка
+- 💾 Кэш обложек — iTunes не дёргается на каждый трек
+- 🔍 Режим диагностики `--dump`
+- 🔒 Приватность: читается только то, что плееры сами публикуют в системе. Никаких данных браузера, никаких токенов.
+
+### 🚀 Быстрый старт
+
+1. **Скачай** `MusicPresence.exe` из [Releases](https://github.com/mavrodikomsd-eng/discord-music-presence/releases) и запусти.
+2. Получи **Client ID**: [discord.com/developers/applications](https://discord.com/developers/applications) → *New Application* → скопируй **Application ID** → вставь в программе → *Save*. Одна минута, бота создавать не нужно.
+3. Включи музыку — статус в Discord оживает.
+
+### 🔧 Как это работает
 
 ```
 [плеер / браузер] ──► Windows SMTC ──► MusicPresence ──► Discord Rich Presence
@@ -26,123 +103,18 @@
                                    └──► iTunes Search API (только URL обложки)
 ```
 
-| Компонент | Что делает |
-|---|---|
-| **Windows SMTC** | Система сама собирает метаданные с плееров и браузеров (YouTube Music, Spotify, десктопные плееры и т.д.) |
-| **MusicPresence** | Читает SMTC, считает таймкоды, запрашивает обложку через iTunes, отправляет в Discord |
-| **Discord** | Показывает статус «Listening to …» с картинкой и прогресс-баром |
-
-**Важно:** приватные данные браузера не читаются, токены не крадутся. Только то, что плеер сам опубликовал в системе.
-
----
-
-## 🚀 Быстрый старт
-
-### 1. Соберите или скачайте
-
-Нужен Rust (stable, Windows):
-
-```powershell
-cargo build --release
-target\release\musicpresence.exe
-```
-
-### 2. Настройте Discord Client ID
-
-1. Откройте [Discord Developer Portal](https://discord.com/developers/applications).
-2. Нажмите **New Application**, придумайте название.
-3. Перейдите во вкладку **General Information** и скопируйте **Application ID** — это длинное число.
-4. В окне MusicPresence вставьте его в поле **Client ID** и нажмите **Save**.
-   > ID сохраняется в `%APPDATA%\MusicPresence\config.json`.
-
-> ℹ️ Бота создавать не нужно. Client ID публичный, его можно показывать.  
-> **Почему нужен свой, а не общий:** Discord привязывает активность к приложению. Если все будут использовать один ID, это будет выглядеть как спам, и приложение могут забанить. Свой ID — одна минута регистрации, и ваш статус будет под своим приложением.
-
-### 3. Запустите музыку
-
-Включите трек в Opera GX / YouTube Music или другом плее
-ре. В Discord у вас должен появиться статус с обложкой и таймкодами.
-
----
-
-## 🔍 Режим диагностики (`--dump`)
-
-Посмотреть, что «видит» программа из SMTC, без GUI и Discord:
-
-```powershell
-cargo run -- --dump
-```
-
-Пример вывода:
-
-```json
-{
-  "title": "Serbia Strong — Audio Remastered",
-  "artist": "Alexey Grushnik LIVE",
-  "album": null,
-  "duration_secs": 218,
-  "position_secs": 177,
-  "status": "Playing",
-  "source_app": "OperaSoftware.OperaGXWebBrowser.1784702699"
-}
-```
-
----
-
-## ✨ Что уже умеет MVP
-
-- 🎧 Название, исполнитель, альбом и обложка в статусе Discord
-- ⏱️ Прогресс трека: тикающий таймер и полоса времени (start/end timestamps)
-- ⏸️ Пауза → «⏸ Пауза»; стоп → статус очищается; закрытие окна → очистка
-- 🔄 Выбор источника: приоритет сессии в состоянии `Playing`
-- ⏭️ Обнаружение перемотки: пересчёт таймкодов при скачке позиции
-- 💾 Кэш обложек (по треку), чтобы не дёргать iTunes повторно
-
----
-
-## ⚠️ Известные ограничения
-
-- Windows 10 1803+ (SMTC); источники, не публикующие SMTC, не видны.
-- Обложка зависит от точности iTunes-поиска; при промахе статус остаётся без картинки.
-- Несколько одновременных сессий (браузер + Spotify) — берётся первая `Playing`.
-- Client ID у каждого свой.
-
----
-
-## 📁 Структура кода
-
 | Модуль | Роль |
 |---|---|
-| `src/smtc_source.rs` | единственный слой WinRT: SMTC → `TrackSnapshot` + байты обложки |
-| `src/track.rs` | доменные типы и сравнение треков |
-| `src/timeline.rs` | математика позиций/таймкодов (протестирована) |
+| `src/smtc_source.rs` | слой WinRT: SMTC → `TrackSnapshot` + байты обложки |
+| `src/timeline.rs` | математика живых таймкодов (протестирована) |
 | `src/artwork.rs` | iTunes-поиск обложки, кэш |
 | `src/discord_presence.rs` | Discord IPC, бэкофф, сборка activity payload |
-| `src/poller.rs` | поток-поллер: SMTC → решение → Discord → общее состояние |
-| `src/app.rs` | egui-интерфейс |
-| `src/config.rs` | сохранение Client ID |
-
-Тесты: `cargo test` (юнит-тесты; живой iTunes-тест: `cargo test live -- --ignored`).
+| `src/autostart.rs` | автозапуск с Windows (HKCU Run) |
 
 ---
 
-## 🛠️ Стек технологий
+<div align="center">
 
-- **Rust** — язык реализации
-- **eframe / egui** — GUI
-- **windows-rs 0.62** — доступ к WinRT / SMTC
-- **discord-rich-presence 1.1.0** — Discord IPC
-- **ureq** + **iTunes Search API** — обложки (бесплатно, без ключа)
-- **pollster** — блокирующие вызовы WinRT без tokio
+**Понравилось — поставь ⭐. Баг нашёл — открой [issue](https://github.com/mavrodikomsd-eng/discord-music-presence/issues).**
 
----
-
-## 🤖 Создано с помощью ИИ
-
-Приложение разработано с использованием **ИИ** и инструмента **opencode** (кодинг-агент) при написании кода, отладке бага временной шкалы и оформлении документации.
-
----
-
-## 📄 Лицензия
-
-MIT
+</div>
